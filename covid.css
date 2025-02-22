@@ -1,0 +1,181 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+
+// Clase que representa a una persona
+class Persona
+{
+    private string nombre; // Variable privada para almacenar el nombre de la persona
+
+    // Constructor que recibe el nombre de la persona
+    public Persona(string nombre)
+    {
+        this.nombre = nombre;
+    }
+
+    // Método GET para obtener el nombre
+    public string Get_Nombre()
+    {
+        return nombre;
+    }
+
+    // Método SET para modificar el nombre
+    public void Set_Nombre(string nuevo_Nombre)
+    {
+        nombre = nuevo_Nombre;
+    }
+
+    // Método que devuelve el nombre de la persona cuando se imprime en consola
+    public override string ToString()
+    {
+        return nombre;
+    }
+}
+
+// Clase que gestiona la campaña de vacunación
+class Campaña_Covid
+{
+    private HashSet<Persona> personas1; // Lista de todas las personas en la campaña
+    private HashSet<Persona> vacunados_Con_Pfizer; // Personas vacunadas con Pfizer
+    private HashSet<Persona> vacunados_Con_AstraZeneca; // Personas vacunadas con AstraZeneca
+
+    // Constructor de la clase, recibe el total de personas y las cantidades vacunadas con cada vacuna
+    public Campaña_Covid(int total_Personas, int vacunados_Con_Pfizer, int vacunados_Con_AstraZeneca)
+    {
+        personas1 = new HashSet<Persona>();
+        
+        // Se generan las personas en la campaña
+        for (int i = 1; i <= total_Personas; i++)
+        {
+            personas1.Add(new Persona($"Persona {i}"));
+        }
+
+        // Convertimos la lista en un List para poder realizar selecciones aleatorias
+        List<Persona> lista_Personas = personas1.ToList();
+        Random rand = new Random();
+
+        // Se seleccionan aleatoriamente las personas vacunadas con Pfizer y AstraZeneca
+        this.vacunados_Con_Pfizer = new HashSet<Persona>(lista_Personas.OrderBy(x => rand.Next()).Take(vacunados_Con_Pfizer));
+        this.vacunados_Con_AstraZeneca = new HashSet<Persona>(lista_Personas.OrderBy(x => rand.Next()).Take(vacunados_Con_AstraZeneca));
+    }
+
+    // Métodos GET para obtener el total de personas y vacunados
+    public int Get_Total_Personas() => personas1.Count;
+    public int Get_Total_Vacunados_Con_Pfizer() => vacunados_Con_Pfizer.Count;
+    public int Get_Total_Vacunados_Con_AstraZeneca() => vacunados_Con_AstraZeneca.Count;
+
+    // Método que devuelve el conjunto de personas que NO han sido vacunadas
+    public HashSet<Persona> Obtener_Personas_No_Vacunadas()
+    {
+        HashSet<Persona> no_Vacunadas = new HashSet<Persona>(personas1);
+        no_Vacunadas.ExceptWith(vacunados_Con_Pfizer);
+        no_Vacunadas.ExceptWith(vacunados_Con_AstraZeneca);
+        return no_Vacunadas;
+    }
+
+    // Método que devuelve las personas que recibieron ambas dosis (Intersección de conjuntos)
+    public HashSet<Persona> Obtener_Vacunados_Con_Ambas_Dosis()
+    {
+        HashSet<Persona> ambas_Dosis = new HashSet<Persona>(vacunados_Con_Pfizer);
+        ambas_Dosis.IntersectWith(vacunados_Con_AstraZeneca);
+        return ambas_Dosis;
+    }
+
+    // Método que devuelve las personas que solo se vacunaron con Pfizer (Diferencia de conjuntos)
+    public HashSet<Persona> Obtener_Vacunados_Solo_Con_Pfizer()
+    {
+        HashSet<Persona> solo_Pfizer = new HashSet<Persona>(vacunados_Con_Pfizer);
+        solo_Pfizer.ExceptWith(vacunados_Con_AstraZeneca);
+        return solo_Pfizer;
+    }
+
+    // Método que devuelve las personas que solo se vacunaron con AstraZeneca (Diferencia de conjuntos)
+    public HashSet<Persona> Obtener_Vacunados_Solo_Con_AstraZeneca()
+    {
+        HashSet<Persona> solo_AstraZeneca = new HashSet<Persona>(vacunados_Con_AstraZeneca);
+        solo_AstraZeneca.ExceptWith(vacunados_Con_Pfizer);
+        return solo_AstraZeneca;
+    }
+
+    // Método que genera el reporte de vacunación en formato PDF
+    public void Generar_Reporte()
+    {
+        Reporte_Vacunacion.Generar_PDF(
+            Obtener_Personas_No_Vacunadas(),
+            Obtener_Vacunados_Con_Ambas_Dosis(),
+            Obtener_Vacunados_Solo_Con_Pfizer(),
+            Obtener_Vacunados_Solo_Con_AstraZeneca()
+        );
+    }
+}
+
+// Clase para generar el reporte en PDF
+class Reporte_Vacunacion
+{
+    // Método para generar el reporte de vacunación en un archivo PDF
+    public static void Generar_PDF(HashSet<Persona> no_Vacunadas, HashSet<Persona> vacunados_Con_Ambas_Dosis, HashSet<Persona> vacunados_Solo_Con_Pfizer, HashSet<Persona> vacunados_Solo_Con_AstraZeneca)
+    {
+        string ruta = "Reporte_Vacunacion.pdf";
+        Document doc = new Document();
+        PdfWriter.GetInstance(doc, new FileStream(ruta, FileMode.Create));
+        doc.Open();
+
+        // Información institucional en el PDF
+        doc.Add(new Paragraph("UNIVERSIDAD ESTATAL AMAZÓNICA"));
+        doc.Add(new Paragraph("FACULTAD DE CIENCIAS DE LA EDUCACIÓN"));
+        doc.Add(new Paragraph("INGENIERÍA EN TECNOLOGÍAS DE LA INFORMACIÓN"));
+        doc.Add(new Paragraph("Desarrollado por: Edilson Guillin"));
+        doc.Add(new Paragraph("\nReporte de Vacunación COVID-19"));
+        doc.Add(new Paragraph("--------------------------------------------------"));
+
+        // Agrega cada lista de personas al PDF
+        Agregar_Lista_Al_PDF(doc, "Personas NO vacunadas", no_Vacunadas);
+        Agregar_Lista_Al_PDF(doc, "Personas vacunadas con ambas dosis", vacunados_Con_Ambas_Dosis);
+        Agregar_Lista_Al_PDF(doc, "Personas solo vacunadas con Pfizer", vacunados_Solo_Con_Pfizer);
+        Agregar_Lista_Al_PDF(doc, "Personas solo vacunadas con AstraZeneca", vacunados_Solo_Con_AstraZeneca);
+
+        doc.Close();
+        Console.WriteLine("\nReporte PDF generado con éxito en 'Reporte_Vacunacion.pdf'.");
+    }
+
+    // Método auxiliar que agrega listas de personas al PDF
+    private static void Agregar_Lista_Al_PDF(Document doc, string titulo, HashSet<Persona> lista)
+    {
+        doc.Add(new Paragraph($"\n{titulo}:"));
+        foreach (var persona in lista)
+        {
+            doc.Add(new Paragraph($"- {persona.Get_Nombre()}"));
+        }
+    }
+}
+
+// Clase principal que ejecuta el programa
+class Program
+{
+    static void Main()
+    {
+        // Información institucional en la consola
+        Console.WriteLine("==============================================");
+        Console.WriteLine("         UNIVERSIDAD ESTATAL AMAZÓNICA");
+        Console.WriteLine(" FACULTAD DE CIENCIAS DE LA EDUCACIÓN");
+        Console.WriteLine(" INGENIERÍA EN TECNOLOGÍAS DE LA INFORMACIÓN");
+        Console.WriteLine("         Desarrollado por: Edilson Guillin");
+        Console.WriteLine("==============================================\n");
+
+        // Creación de la campaña de vacunación con datos iniciales
+        Campaña_Covid campaña = new Campaña_Covid(500, 75, 75);
+
+        // Muestra los resultados en la consola
+        Console.WriteLine($"Total personas: {campaña.Get_Total_Personas()}");
+        Console.WriteLine($"No vacunadas: {campaña.Obtener_Personas_No_Vacunadas().Count}");
+        Console.WriteLine($"Vacunadas con ambas dosis: {campaña.Obtener_Vacunados_Con_Ambas_Dosis().Count}");
+        Console.WriteLine($"Solo vacunadas con Pfizer: {campaña.Obtener_Vacunados_Solo_Con_Pfizer().Count}");
+        Console.WriteLine($"Solo vacunadas con AstraZeneca: {campaña.Obtener_Vacunados_Solo_Con_AstraZeneca().Count}");
+
+        // Genera el reporte en PDF
+        campaña.Generar_Reporte();
+    }
+}
