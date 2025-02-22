@@ -16,13 +16,18 @@ Generación de 500 ciudadanos ficticios con nombres secuenciales (Ciudadano 1, C
 Selección aleatoria de 75 ciudadanos para cada tipo de vacuna.
 Uso de operaciones de conjuntos en C# (ExceptWith e IntersectWith) para obtener los diferentes listados.
 Generación de un archivo PDF (Reporte_Vacunacion.pdf) con los resultados de la campaña.
+
+Operaciones de conjuntos utilizadas:
+  - `ExceptWith`: Para obtener el conjunto de ciudadanos no vacunados.
+  - `IntersectWith`: Para determinar los ciudadanos que han recibido ambas dosis.
+  
 Requisitos:
 
 .NET Framework o .NET Core.
 Librería iTextSharp (se puede instalar vía NuGet con el comando: Install-Package iTextSharp).
 Instrucciones para ejecutar el proyecto:
 
-Clonar el repositorio: git clone https://github.com/TuUsuario/CampañaVacunacionCovid-ConjuntosPDF.git
+Clonar el repositorio: git clone https://github.com/Edi-fran/Vacunaci-n-COVID-19-Simulaci-n-con-Operaciones-de-Conjuntos-y-generaci-n-de-Reporte-PDF-en-C-.git
 Abrir la solución en Visual Studio o el IDE de tu preferencia.
 Restaurar las dependencias (incluyendo iTextSharp).
 Compilar y ejecutar el proyecto.
